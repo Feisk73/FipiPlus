@@ -491,3 +491,6 @@ html.dark select {
 p span {
   color: var(--color-text) !important;
 }
+input {
+  color: var(--color-text);
+}
