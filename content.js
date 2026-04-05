@@ -55,37 +55,41 @@ function changeTheme() {
   if (document.documentElement.classList.contains("dark")) {
     browser.storage.local.set({ theme: "dark" });
   } else {
-    browser.storage.local.remove('theme');
+    browser.storage.local.remove("theme");
   }
 }
+function svgFromString(svgText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, "image/svg+xml");
+  return doc.querySelector("svg");
+}
+
+function setIcon(button, isDark, sunSvg, moonSvg) {
+  button.replaceChildren(svgFromString(isDark ? sunSvg : moonSvg));
+}
+
 async function initThemePicker() {
   const { theme } = await browser.storage.local.get("theme");
   if (theme === "dark") {
-    document.documentElement.classList.toggle("dark");
+    document.documentElement.classList.add("dark");
   }
 
   const button = document.createElement("button");
   button.className = "theme-picker";
 
-  const moonSvg = await fetch(browser.runtime.getURL("icons/moon.svg")).then(
-    (r) => r.text(),
-  );
-  const sunSvg = await fetch(browser.runtime.getURL("icons/sun.svg")).then(
-    (r) => r.text(),
-  );
+  const [moonSvg, sunSvg] = await Promise.all([
+    fetch(browser.runtime.getURL("icons/moon.svg")).then((r) => r.text()),
+    fetch(browser.runtime.getURL("icons/sun.svg")).then((r) => r.text()),
+  ]);
 
-  if (theme === "dark") {
-    button.innerHTML = sunSvg;
-  } else {
-    button.innerHTML = moonSvg;
-  }
+  setIcon(button, theme === "dark", sunSvg, moonSvg);
 
-  button.onclick = () => {
+  button.addEventListener("click", () => {
     changeTheme();
-    button.innerHTML = document.documentElement.classList.contains("dark")
-      ? sunSvg
-      : moonSvg;
-  };
+    const isDark = document.documentElement.classList.contains("dark");
+    setIcon(button, isDark, sunSvg, moonSvg);
+  });
+
   document.querySelector(".header-container-resizable").appendChild(button);
 }
 
